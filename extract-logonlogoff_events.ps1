@@ -20,7 +20,7 @@ ${endDate}   = ${startDate}.AddMonths(1).AddSeconds(-1)
 
 ${events} = Get-WinEvent -FilterHashtable @{
     LogName   = 'System'
-    Id        = 7001, 7002
+    Id        = 7001, 7002, 1, 105
     StartTime = ${startDate}
     EndTime   = ${endDate}
 }
@@ -30,11 +30,11 @@ ${logoffEvents} = @{}
 
 foreach (${event} in ${events}) {
     ${date} = ${event}.TimeCreated.ToString("MM/dd (ddd)")
-    if (${event}.Id -eq 7001) {
+    if ((${event}.Id -eq 7001) -or (${event}.Id -eq 1)) {
         if (-not ${logonEvents}[${date}] -or ${event}.TimeCreated -lt ${logonEvents}[${date}]) {
             ${logonEvents}[${date}] = ${event}.TimeCreated
         }
-    } elseif (${event}.Id -eq 7002) {
+    } elseif ((${event}.Id -eq 7002) -or (${event}.Id -eq 105)) {
         if (-not ${logoffEvents}[${date}] -or ${event}.TimeCreated -gt ${logoffEvents}[${date}]) {
             ${logoffEvents}[${date}] = ${event}.TimeCreated
         }
