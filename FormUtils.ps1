@@ -27,26 +27,37 @@ function Create-Label {
     param (
         [string]$caption,
         [int]$locationLeft,
-        [int]$locationTop
+        [int]$locationTop,
         [int]$width,
         [int]$height,
         [System.Windows.Forms.Form]$form
     )
 
     # ラベルオブジェクトを作成
-    $label = New-Object System.Windows.Forms.Label
+    $label          = New-Object System.Windows.Forms.Label
     $label.Location = New-Object System.Drawing.Point($locationLeft, $locationTop)
-    $label.Size = New-Object System.Drawing.Size($width, $height)
+    $label.Size     = New-Object System.Drawing.Size($width, $height)
 	$form.Controls.Add($label)
     return $label
 }
 
+# テキストボックスを作成する。
+# multilineMode
+#  $true       : 複数行表示
+#  $false      : １行表示
+# scrollBarType
+#  "None"      : スクロールバーなし
+#  "Horizontal": 水平スクロールバー
+#  "Vertical"  : 垂直スクロールバー
+#  "Both"      : 両方表示
 function Create-Text {
     param (
         [int]$locationLeft,
-        [int]$locationTop
+        [int]$locationTop,
         [int]$width,
         [int]$height,
+        [bool]$multilineMode = $false,
+        [string]$scrollBarType = "None",
         [System.Windows.Forms.Form]$form
      )
 
@@ -54,9 +65,69 @@ function Create-Text {
     $textbox = New-Object System.Windows.Forms.TextBox
     $textbox.Location = New-Object System.Drawing.Point($locationLeft, $locationTop)
     $textbox.Size = New-Object System.Drawing.Size($width, $height)
+    $textBox.Multiline = $multilineMode
+    $textBox.ScrollBars = $scrollBarType
 	$form.Controls.Add($textbox)
     return $textbox
 }
+
+function Create-ComboBoxWithValues {
+    param (
+        [string[]]$items,            # 表示名の一覧
+        [object[]]$itemValues,       # 対応する内部値（IDなど）
+        [int]$locationLeft,
+        [int]$locationTop,
+        [int]$width,
+        [int]$height,
+        [System.Windows.Forms.Form]$form
+    )
+
+    if ($items.Count -ne $itemValues.Count) {
+        throw "itemsとitemValuesの数が一致しません"
+    }
+
+    # ComboBox作成
+    $comboBox = New-Object System.Windows.Forms.ComboBox
+    $comboBox.Location = New-Object System.Drawing.Point($locationLeft, $locationTop)
+    $comboBox.Size     = New-Object System.Drawing.Size($width, $height)
+
+    # 表示アイテムを追加
+    $comboBox.Items.AddRange($items)
+
+    # 初期選択
+    if ($items.Length -gt 0) {
+        $comboBox.SelectedIndex = 0
+    }
+
+    # 内部値対応表（表示名 → 値）を Tag に格納
+    $mapping = @{}
+    for ($i = 0; $i -lt $items.Count; $i++) {
+        $mapping[$items[$i]] = $itemValues[$i]
+    }
+    $comboBox.Tag = $mapping
+
+    # フォームに追加
+    $form.Controls.Add($comboBox)
+    return $comboBox
+}
+
+function Create-ComboBox {
+    param (
+        [string[]]$items,
+        [int]$locationLeft,
+        [int]$locationTop,
+        [int]$width,
+        [int]$height,
+        [System.Windows.Forms.Form]$form
+    )
+
+    # 内部値として表示名そのまま渡す
+    return Create-ComboBoxWithValues -items $items -itemValues $items `
+        -locationLeft $locationLeft -locationTop $locationTop `
+        -width $width -height $height -form $form
+}
+
+
 
 # ラベルとテキストボックスのペアを作成する関数
 function Create-LabelTextBoxPair {
@@ -84,6 +155,71 @@ function Create-LabelTextBoxPair {
     # ラベルとテキストボックスのオブジェクトを配列で返す
     return @($label, $textBox)
 }
+
+function Create-Button {
+    param (
+        [string]$btnText,
+        [int]$btnXPosition,
+        [int]$btnYPosition,
+        [System.Windows.Forms.Form]$Form
+    )
+    # ボタンを作成
+    $button          = New-Object System.Windows.Forms.Button
+    $button.Text     = $btnText
+    $button.Location = New-Object System.Drawing.Point($btnXPosition, $btnYPosition)
+    $form.Controls.Add($button)
+    return $button
+}
+
+
+function Create-LabelComboBoxPair {
+    param (
+        [string]$labelText,
+        [string[]]$items,
+        [object[]]$itemValues = $null,
+        [int]$labelLeft,
+        [int]$labelTop,
+        [int]$labelWidth,
+        [int]$labelHeight,
+        [int]$comboLeft,
+        [int]$comboTop,
+        [int]$comboWidth,
+        [int]$comboHeight,
+        [System.Windows.Forms.Form]$form
+    )
+
+    # ラベルを生成（既存のCreate-Labelを使用）
+    $label = Create-Label `
+        -caption 	  $labelText `
+        -locationLeft $labelLeft `
+        -locationTop  $labelTop `
+        -width 		  $labelWidth `
+        -height 	  $labelHeight `
+        -form 		  $form
+
+    # ComboBoxを生成
+    if ($null -eq $itemValues) {
+        $comboBox = Create-ComboBox `
+            -items 		  $items `
+            -locationLeft $comboLeft `
+            -locationTop  $comboTop `
+            -width 		  $comboWidth `
+            -height 	  $comboHeight `
+            -form 		  $form
+    } else {
+        $comboBox = Create-ComboBoxWithValues `
+            -items 		  $items `
+            -itemValues   $itemValues `
+            -locationLeft $comboLeft `
+            -locationTop  $comboTop `
+            -width 		  $comboWidth `
+            -height 	  $comboHeight `
+            -form 		  $form
+    }
+
+    return @($label, $comboBox)
+}
+
 
 
 # Enumのようなクラスを定義
