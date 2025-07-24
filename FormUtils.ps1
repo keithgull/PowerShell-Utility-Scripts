@@ -35,6 +35,7 @@ function Create-Label {
 
     # ラベルオブジェクトを作成
     $label          = New-Object System.Windows.Forms.Label
+    $label.Text     = $caption
     $label.Location = New-Object System.Drawing.Point($locationLeft, $locationTop)
     $label.Size     = New-Object System.Drawing.Size($width, $height)
 	$form.Controls.Add($label)
@@ -61,12 +62,19 @@ function Create-Text {
         [System.Windows.Forms.Form]$form
      )
 
-    # フォームオブジェクトを作成
+    # テキストボックスオブジェクトを作成
     $textbox = New-Object System.Windows.Forms.TextBox
     $textbox.Location = New-Object System.Drawing.Point($locationLeft, $locationTop)
     $textbox.Size = New-Object System.Drawing.Size($width, $height)
-    $textBox.Multiline = $multilineMode
-    $textBox.ScrollBars = $scrollBarType
+    $textbox.Multiline = $multilineMode
+    # スクロールバーの設定
+    switch ($scrollBarType) {
+        "None"       { $textbox.ScrollBars = [System.Windows.Forms.ScrollBars]::None }
+        "Horizontal" { $textbox.ScrollBars = [System.Windows.Forms.ScrollBars]::Horizontal }
+        "Vertical"   { $textbox.ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical }
+        "Both"       { $textbox.ScrollBars = [System.Windows.Forms.ScrollBars]::Both }
+        default      { $textbox.ScrollBars = [System.Windows.Forms.ScrollBars]::None }
+    }
 	$form.Controls.Add($textbox)
     return $textbox
 }
@@ -145,12 +153,9 @@ function Create-LabelTextBoxPair {
     )
 
     # ラベルオブジェクトを作成
-    $label = Create-Label -caption $labelText -labelLeft $labelLeft -labelTop $labelTop -labelWidth $labelWidth -labelHeight $labelHeight -form $form
+    $label = Create-Label -caption $labelText -locationLeft $labelLeft -locationTop $labelTop -width $labelWidth -height $labelHeight -form $form
     # テキストボックスオブジェクトを作成
-    $textBox = Create-TextBox -textBoxLeft $textBoxLeft -textBoxTop $textBoxTop -textBoxWidth $textBoxWidth -textBoxHeight $textBoxHeight -form $form
-    # ラベルとテキストボックスをフォームに追加
-    $form.Controls.Add($label)
-    $form.Controls.Add($textBox)
+    $textBox = Create-Text -locationLeft $textBoxLeft -locationTop $textBoxTop -width $textBoxWidth -height $textBoxHeight -form $form
 
     # ラベルとテキストボックスのオブジェクトを配列で返す
     return @($label, $textBox)
